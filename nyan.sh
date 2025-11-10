@@ -964,12 +964,18 @@ for ((y=YOFFSET; y<70-YOFFSET; y++)); do
     done
     echo $'\033[0m'
 done
+# POS="\e[12;34R" の例
 stty -echo -icanon
 echo -n $QUERYCURSOR 1>&2
 read -s -dR POS
 stty echo icanon
-NUM=${POS//[^0-9]/}
-CURSORHOME=$((${POS:2:${#POS}-4} - y))
+
+# 行と列を分割
+IFS=';' read -r row col <<< "${POS#*[}"
+col=${col%R}
+
+CURSORHOME=$(( row - y ))
+
 echo -n $SAVECURSOR
 for ((f=1; f<=12; f++)); do
     for ((y=YOFFSET; y<70-YOFFSET; y++)); do
@@ -1008,7 +1014,7 @@ for (( i=0; i<${#message}; i++ )); do
 done
 
 # Wait for 3 seconds after message is complete
-sleep 3
+sleep 1.5
 
 # Reset to default terminal settings
 echo -e "\033[0m"
