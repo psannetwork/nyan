@@ -929,19 +929,16 @@ PALETTE=([16]="0000/0000/0000"
 [213]="FFFF/9999/FFFF"
 [231]="FFFF/FFFF/FFFF"
 [210]="FFFF/9999/9999")
-nyancat() {
 
+nyancat() {
 for color in ${COL[@]}; do
     echo -en "\033]4;$color;rgb:${PALETTE[$color]}\033\\"
 done
-
-
 PIXEL=" "
 SAVECURSOR=$'\0337'
 HIDECURSOR=$'\033[?25l'
 RESTORECURSOR=$'\0338\033[?12;25h'
 QUERYCURSOR=$'\033[6n'
-
 LINES=$(tput lines)
 COLUMNS=$(tput cols)
 YOFFSET=$(((70-LINES)/2))
@@ -950,14 +947,10 @@ WIDTH=$((COLUMNS / 70 ))
 for ((i=0; i<WIDTH; i++)); do
     CHAR+=${PIXEL}
 done
-
 CACHE=$(mktemp -d --suffix __NYANCAT)
-
-trap 'exit 1' INT TERM
+#trap 'exit 1' INT TERM
 trap 'rm -rf "${CACHE}"; echo -n $RESTORECURSOR' EXIT
-
 #echo -n $HIDECURSOR
-
 for ((y=YOFFSET; y<70-YOFFSET; y++)); do
     oldpixel=-1
     for ((x=0; x<70; x++)); do
@@ -971,15 +964,12 @@ for ((y=YOFFSET; y<70-YOFFSET; y++)); do
     done
     echo $'\033[0m'
 done
-
 stty -echo -icanon
 echo -n $QUERYCURSOR 1>&2
 read -s -dR POS
 stty echo icanon
-
 CURSORHOME=$((${POS:2:${#POS}-4} - y))
 echo -n $SAVECURSOR
-
 for ((f=1; f<=12; f++)); do
     for ((y=YOFFSET; y<70-YOFFSET; y++)); do
         stride=$((y+f*70))
@@ -995,7 +985,6 @@ for ((f=1; f<=12; f++)); do
     done
 done
 echo -n $RESTORECURSOR
-
 while true; do
     for ((f=1; f<=12; f++)); do
         cat $CACHE/frame_${f}
@@ -1023,11 +1012,43 @@ sleep 3
 # Reset to default terminal settings
 echo -e "\033[0m"
 }
+bgm() {
+    local DIR="$HOME/.nyan_tmp"
+    local FILE="$DIR/nyan.wav"
+
+    mkdir -p "$DIR"
+
+    if [ ! -f "$FILE" ]; then
+        echo "nyan.wav is not found. Now downloading to $DIR ..."
+        curl -L -o "$FILE" https://github.com/psannetwork/nyan/releases/download/a/nyan.wav
+    fi
+
+    # 非同期で再生して PID を保持
+    aplay "$FILE" &>/dev/null &
+    BGM_PID=$!
+}
+
+stop_bgm() {
+    # BGM_PID が存在したら kill
+    if [ -n "$BGM_PID" ] && kill -0 "$BGM_PID" 2>/dev/null; then
+        kill "$BGM_PID"
+    fi
+    pkill aplay
+}
 
 start() {
-clear
-message
-nyancat
+    
+
+    # Ctrl+C が押されたら BGM 停止して終了
+    trap "stop_bgm" INT TERM EXIT
+
+    bgm
+    clear
+    message
+    nyancat
+
+    # 正常終了時も BGM 止める
+    stop_bgm
 }
 
 
