@@ -1016,8 +1016,20 @@ bgm() {
     local DIR="$HOME/.nyan_tmp"
     local FILE="$DIR/nyan.wav"
 
-    mkdir -p "$DIR"
+    # ディレクトリ作成
+    mkdir -p "$DIR" 2>/dev/null
 
+    # もし作成に失敗、または書き込めない場合 → フォールバック
+    if [ $? -ne 0 ] || [ ! -w "$DIR" ]; then
+        DIR="/usr/local/nyan"
+        FILE="$DIR/nyan.wav"
+        echo "Using fallback directory: $DIR"
+
+        # フォールバック先は root 権限が必要な可能性がある
+        sudo mkdir -p "$DIR"
+    fi
+
+    # ダウンロード（無ければ）
     if [ ! -f "$FILE" ]; then
         echo "nyan.wav is not found. Now downloading to $DIR ..."
         curl -L -o "$FILE" https://github.com/psannetwork/nyan/releases/download/a/nyan.wav
@@ -1027,6 +1039,7 @@ bgm() {
     aplay "$FILE" &>/dev/null &
     BGM_PID=$!
 }
+
 
 stop_bgm() {
     # BGM_PID が存在したら kill
