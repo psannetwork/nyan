@@ -968,6 +968,7 @@ stty -echo -icanon
 echo -n $QUERYCURSOR 1>&2
 read -s -dR POS
 stty echo icanon
+NUM=${POS//[^0-9]/}
 CURSORHOME=$((${POS:2:${#POS}-4} - y))
 echo -n $SAVECURSOR
 for ((f=1; f<=12; f++)); do
