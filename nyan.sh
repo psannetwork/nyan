@@ -929,6 +929,7 @@ PALETTE=([16]="0000/0000/0000"
 [213]="FFFF/9999/FFFF"
 [231]="FFFF/FFFF/FFFF"
 [210]="FFFF/9999/9999")
+nyancat() {
 
 for color in ${COL[@]}; do
     echo -en "\033]4;$color;rgb:${PALETTE[$color]}\033\\"
@@ -1001,3 +1002,34 @@ while true; do
         sleep 0.06
     done
 done
+}
+
+message() {
+
+message="Your computer has been trashed by the MEMZ trojan. Now enjoy the nyan cat... "
+
+# Set white background and black text
+echo -ne "\033[47m\033[30m"
+
+# Print each character with delay
+for (( i=0; i<${#message}; i++ )); do
+    echo -n "${message:$i:1}"
+    sleep 0.02
+done
+
+# Wait for 3 seconds after message is complete
+sleep 3
+
+# Reset to default terminal settings
+echo -e "\033[0m"
+}
+
+start() {
+clear
+message
+nyancat
+}
+
+
+
+start
